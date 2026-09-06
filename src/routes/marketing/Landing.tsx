@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, Barcode, BarChart3, Bot, Check, CheckCircle2, Mail, MapPin, Package, Phone, ScanLine, Send, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
+import { ArrowRight, Barcode, BarChart3, Bot, Check, CheckCircle2, ChevronDown, Mail, MapPin, Package, Phone, ScanLine, Send, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
 import landingProductsBarcode from '@/assets/landing-products-barcode.jpg';
 import landingCashFlow from '@/assets/landing-cash-flow.jpg';
 import landingWhatsApp from '@/assets/landing-whatsapp.jpg';
 import landingRisipAi from '@/assets/landing-risip-ai.jpg';
+import landingShop from '@/assets/landing-shop.jpg';
+import landingChat from '@/assets/landing-chat.jpeg';
 import Button from '@/components/ui/Button';
 import RisipLogo from '@/components/ui/RisipLogo';
 import WhatsAppFloatingButton from '@/components/whatsapp/WhatsAppFloatingButton';
@@ -181,67 +183,81 @@ export default function Landing() {
   if (auth.status === 'signed-in' && auth.profile) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen bg-surface-muted text-ink">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-surface-border/70 bg-surface/90 backdrop-blur">
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-book/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to="/" aria-label="Risip" className="text-role-admin"><RisipLogo className="h-10 w-auto" /></Link>
+          <Link to="/" aria-label="Risip" className="text-white"><RisipLogo className="h-10 w-auto" /></Link>
           <nav className="flex items-center gap-1 sm:gap-3">
-            <a href="#features" className="hidden px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink sm:block">{c.features}</a>
-            <a href="#pricing" className="hidden px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink sm:block">{c.pricingNav}</a>
-            <a href="#faq" className="hidden px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink sm:block">{c.faqNav}</a>
-            <Link to="/login"><Button variant="ghost">{c.login}</Button></Link>
+            <a href="#features" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.features}</a>
+            <a href="#pricing" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.pricingNav}</a>
+            <a href="#faq" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.faqNav}</a>
+            <Link to="/login" className="px-3 py-2 text-sm font-semibold text-white/80 hover:text-white">{c.login}</Link>
             <Link to="/signup" className="hidden sm:block"><Button tint="admin">{c.start}</Button></Link>
           </nav>
         </div>
       </header>
 
       <main>
-        <section className="overflow-hidden bg-gradient-to-br from-role-admin/5 via-surface to-[#25D366]/5 pb-20 pt-32 sm:pb-28 sm:pt-40">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[.92fr_1.08fr] lg:px-8">
+        {/* The cover of the book: dark card stock, the title stamped on it. */}
+        <section className="relative overflow-hidden bg-book pb-20 pt-28 sm:pb-24 sm:pt-36">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-56 left-1/2 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-role-admin/15 blur-3xl" />
+          <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-role-admin/20 bg-surface px-3 py-1.5 text-xs font-semibold text-role-admin shadow-sm"><ShieldCheck className="h-3.5 w-3.5" /> {c.eyebrow}</div>
-              <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl">{c.hero} <span className="text-role-admin">{c.accent}</span></h1>
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-muted sm:text-xl">{c.lead}</p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/75"><ShieldCheck className="h-3.5 w-3.5 text-role-admin" /> {c.eyebrow}</div>
+              <h1 className="mt-7 max-w-2xl font-display text-4xl font-semibold leading-[1.1] tracking-tight text-white text-balance sm:text-6xl">{c.hero} <span className="text-role-admin">{c.accent}</span></h1>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">{c.lead}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Link to="/signup"><Button tint="admin" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.primary}<ArrowRight className="h-4 w-4" /></Button></Link>
-                <Link to="/login"><Button variant="secondary" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.secondary}</Button></Link>
+                <Link to="/login" className="inline-flex w-full items-center justify-center rounded-lg border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto">{c.secondary}</Link>
               </div>
-              <ul className="mt-8 grid gap-3 text-sm text-ink-muted sm:grid-cols-3">
-                {c.trust.map((item) => <li key={item} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{item}</li>)}
+              <ul className="mt-9 grid gap-3 text-sm text-white/60 sm:grid-cols-3">
+                {c.trust.map((item) => <li key={item} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#25D366]" />{item}</li>)}
               </ul>
             </div>
 
-            <HeroShowcaseCarousel />
+            <PhoneMockup />
           </div>
         </section>
 
-        <section className="bg-surface py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center"><h2 className="text-3xl font-bold">{c.howTitle}</h2><p className="mt-3 text-ink-muted">{c.howLead}</p></div>
-            <div className="mt-12 grid divide-y divide-surface-border md:grid-cols-3 md:divide-x md:divide-y-0">
-              {c.steps.map(([title, body], index) => { const Icon = STEP_ICONS[index]; return <article key={title} className="py-8 first:pt-0 last:pb-0 md:px-10 md:py-2 md:first:pl-0 md:last:pr-0"><Icon className="h-7 w-7 text-role-admin" /><h3 className="mt-6 text-lg font-semibold">{title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-ink-muted">{body}</p></article>; })}
-            </div>
-          </div>
+        {/* A real shop, not a stock photo. */}
+        <section aria-hidden="true" className="relative h-64 overflow-hidden sm:h-80 lg:h-96">
+          <img src={landingShop} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-book/70 via-book/10 to-transparent" />
         </section>
 
-        <section id="features" className="py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl"><h2 className="text-3xl font-bold">{c.featureTitle}</h2><p className="mt-3 text-ink-muted">{c.featureLead}</p></div>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              {c.cards.map(([title, body], index) => { const Icon = FEATURE_ICONS[index]; return <article key={title} className="group overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><img src={FEATURE_IMAGES[index]} alt={title} loading="lazy" decoding="async" className="h-52 w-full object-cover transition duration-500 group-hover:scale-[1.02]" /><div className="p-6"><Icon className="h-6 w-6 text-role-admin" /><h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-ink-muted">{body}</p></div></article>; })}
-            </div>
-          </div>
-        </section>
+        <PaperSection>
+          <div className="mx-auto max-w-2xl text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.howTitle}</h2><p className="mt-3 text-ink-muted">{c.howLead}</p></div>
+          <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
+            {c.steps.map(([title, body], index) => { const Icon = STEP_ICONS[index]; return (
+              <li key={title} className="relative">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-book text-white"><Icon className="h-5 w-5" /></span>
+                  <span className="font-display text-3xl font-semibold text-role-admin/25 tabular-nums">{index + 1}</span>
+                </div>
+                <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+                <p className="mt-2.5 max-w-sm text-sm leading-7 text-ink-muted">{body}</p>
+              </li>
+            ); })}
+          </ol>
+        </PaperSection>
 
-        <section id="pricing" className="bg-surface py-16 sm:py-20">
+        <PaperSection id="features" tinted>
+          <div className="mx-auto max-w-2xl text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.featureTitle}</h2><p className="mt-3 text-ink-muted">{c.featureLead}</p></div>
+          <div className="mt-12"><HeroShowcaseCarousel /></div>
+          <div className="mt-16 grid gap-6 sm:grid-cols-2">
+            {c.cards.map(([title, body], index) => { const Icon = FEATURE_ICONS[index]; return <article key={title} className="group overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><img src={FEATURE_IMAGES[index]} alt={title} loading="lazy" decoding="async" className="h-52 w-full object-cover transition duration-500 group-hover:scale-[1.02]" /><div className="p-6"><Icon className="h-6 w-6 text-role-admin" /><h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-ink-muted">{body}</p></div></article>; })}
+          </div>
+        </PaperSection>
+
+        <section id="pricing" className="relative overflow-hidden bg-paper py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold">{c.pricing.title}</h2>
+              <h2 className="font-display text-3xl font-semibold text-balance">{c.pricing.title}</h2>
               <p className="mt-3 text-ink-muted">{c.pricing.lead}</p>
             </div>
 
             <div className="mt-8 flex justify-center">
-              <div className="inline-flex rounded-full border border-surface-border bg-surface-muted p-1" role="group">
+              <div className="inline-flex rounded-full border border-ink/10 bg-white p-1" role="group">
                 <button
                   type="button"
                   onClick={() => setYearly(false)}
@@ -258,10 +274,13 @@ export default function Landing() {
             </div>
 
             <div className="mt-12 grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {c.pricing.plans.map((plan) => (
+              {c.pricing.plans.map((plan) => {
+                // The recommended plan is the one printed on the cover stock.
+                const dark = plan.popular;
+                return (
                 <article
                   key={plan.name}
-                  className={`relative flex flex-col rounded-2xl bg-surface p-8 shadow-sm ${plan.popular ? 'border-2 border-role-admin shadow-lg lg:-mt-4 lg:mb-4' : 'border border-surface-border'}`}
+                  className={`relative flex flex-col rounded-2xl p-8 shadow-sm ${dark ? 'bg-book text-white shadow-xl lg:-mt-4 lg:mb-4' : 'border border-ink/10 bg-white'}`}
                 >
                   {/* Sentence case, not shouted. "WENGI HUCHAGUA" in capitals
                       also wrapped onto two lines and pushed the card's heading
@@ -271,16 +290,16 @@ export default function Landing() {
                       {c.pricing.popular}
                     </span>
                   )}
-                  <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <p className="mt-1 min-h-[2.5rem] text-sm text-ink-muted">{plan.tagline}</p>
+                  <h3 className="font-display text-xl font-semibold">{plan.name}</h3>
+                  <p className={`mt-1 min-h-[2.5rem] text-sm ${dark ? 'text-white/55' : 'text-ink-muted'}`}>{plan.tagline}</p>
                   <div className="mt-5 flex items-baseline gap-1">
-                    <span className="text-sm font-semibold text-ink-muted">TSh</span>
-                    <span className="text-4xl font-bold tabular-nums tracking-tight">{yearly ? plan.y : plan.m}</span>
+                    <span className={`text-sm font-semibold ${dark ? 'text-white/55' : 'text-ink-muted'}`}>TSh</span>
+                    <span className="font-display text-4xl font-semibold tabular-nums tracking-tight">{yearly ? plan.y : plan.m}</span>
                   </div>
-                  <p className="mt-1 text-sm text-ink-muted">{yearly ? c.pricing.perYear : c.pricing.perMonth}</p>
-                  <div className="mt-5 rounded-lg bg-surface-muted px-4 py-3 text-sm">
-                    <span className="font-bold tabular-nums text-ink">{plan.cap}</span>
-                    <span className="text-ink-muted"> {c.pricing.msgs}</span>
+                  <p className={`mt-1 text-sm ${dark ? 'text-white/55' : 'text-ink-muted'}`}>{yearly ? c.pricing.perYear : c.pricing.perMonth}</p>
+                  <div className={`mt-5 rounded-lg px-4 py-3 text-sm ${dark ? 'bg-white/10' : 'bg-paper'}`}>
+                    <span className={`font-bold tabular-nums ${dark ? 'text-white' : 'text-ink'}`}>{plan.cap}</span>
+                    <span className={dark ? 'text-white/55' : 'text-ink-muted'}> {c.pricing.msgs}</span>
                   </div>
                   <ul className="mt-6 flex-1 space-y-3">
                     {plan.feats.map((raw) => {
@@ -288,32 +307,39 @@ export default function Landing() {
                       const label = soon ? raw.slice(0, -6) : raw;
                       return (
                         <li key={raw} className="flex items-start gap-3 text-sm">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-role-admin" />
-                          <span className="text-ink-muted">
+                          <Check className={`mt-0.5 h-4 w-4 shrink-0 ${dark ? 'text-[#25D366]' : 'text-role-admin'}`} />
+                          <span className={dark ? 'text-white/70' : 'text-ink-muted'}>
                             {label}
-                            {soon && <span className="ml-2 rounded bg-role-admin/10 px-1.5 py-0.5 text-xs font-semibold text-role-admin">{c.pricing.soon}</span>}
+                            {soon && <span className={`ml-2 rounded px-1.5 py-0.5 text-xs font-semibold ${dark ? 'bg-white/15 text-white' : 'bg-role-admin/10 text-role-admin'}`}>{c.pricing.soon}</span>}
                           </span>
                         </li>
                       );
                     })}
                   </ul>
-                  <Link to="/signup" className="mt-8">
-                    <Button tint="admin" fullWidth variant={plan.popular ? 'primary' : 'secondary'} className="justify-center py-3">
+                  {dark ? (
+                    <Link to="/signup" className="mt-8 flex h-12 items-center justify-center rounded-lg bg-role-admin px-4 text-sm font-semibold text-white transition hover:bg-role-admin/90">
                       {c.pricing.cta}
-                    </Button>
-                  </Link>
+                    </Link>
+                  ) : (
+                    <Link to="/signup" className="mt-8">
+                      <Button tint="admin" fullWidth variant="secondary" className="justify-center py-3">
+                        {c.pricing.cta}
+                      </Button>
+                    </Link>
+                  )}
                 </article>
-              ))}
+                );
+              })}
             </div>
 
             <p className="mx-auto mt-10 max-w-3xl text-center text-sm leading-7 text-ink-muted">{c.pricing.note}</p>
 
             <div className="mt-16">
-              <h3 className="text-center text-xl font-bold">{c.pricing.compareTitle}</h3>
-              <div className="mt-6 overflow-x-auto rounded-2xl border border-surface-border bg-surface shadow-sm">
+              <h3 className="text-center font-display text-xl font-semibold">{c.pricing.compareTitle}</h3>
+              <div className="mt-6 overflow-x-auto rounded-2xl border border-ink/10 bg-white shadow-sm">
                 <table className="w-full min-w-[44rem] text-sm">
                   <thead>
-                    <tr className="border-b border-surface-border">
+                    <tr className="border-b border-ink/10">
                       <th className="px-5 py-4" />
                       {c.pricing.cols.map((col) => (
                         <th key={col} className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-widest text-ink-muted">{col}</th>
@@ -322,7 +348,7 @@ export default function Landing() {
                   </thead>
                   <tbody>
                     {c.pricing.compare.map(([label, ...cells]) => (
-                      <tr key={label as string} className="border-b border-surface-border/70 last:border-0">
+                      <tr key={label as string} className="border-b border-ink/[.07] last:border-0">
                         <th scope="row" className="px-5 py-4 text-left font-normal text-ink">{label as string}</th>
                         {cells.map((cell, i) => (
                           <td key={i} className="px-5 py-4 text-center tabular-nums">
@@ -346,21 +372,27 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="faq" className="bg-surface-muted/40 py-16 sm:py-20">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center"><h2 className="text-3xl font-bold">{c.faqTitle}</h2><p className="mt-3 text-ink-muted">{c.faqLead}</p></div>
-            <div className="mt-12 space-y-4">
-              {c.faqs.map(([question, answer]) => <details key={question} className="group rounded-2xl border border-surface-border bg-surface-muted/40 px-6 py-5 shadow-sm sm:px-8 sm:py-6"><summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-semibold sm:text-lg"><span>{question}</span><span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-role-admin/20 text-xl font-normal text-role-admin transition group-open:rotate-45">+</span></summary><p className="mt-4 max-w-3xl pr-10 text-sm leading-7 text-ink-muted sm:text-base">{answer}</p></details>)}
-            </div>
+        <PaperSection id="faq" tinted narrow>
+          <div className="text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.faqTitle}</h2><p className="mt-3 text-ink-muted">{c.faqLead}</p></div>
+          <div className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
+            {c.faqs.map(([question, answer]) => (
+              <details key={question} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-semibold sm:text-lg">
+                  <span>{question}</span>
+                  <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-role-admin transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-4 max-w-3xl pr-10 text-sm leading-7 text-ink-muted sm:text-base">{answer}</p>
+              </details>
+            ))}
           </div>
-        </section>
+        </PaperSection>
 
-        <section className="bg-sidebar py-16 text-white sm:py-20">
-          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6"><h2 className="text-3xl font-bold">{c.ctaTitle}</h2><p className="mx-auto mt-4 max-w-2xl text-white/75">{c.ctaBody}</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/signup"><Button className="w-full justify-center bg-white px-6 py-3 !text-sidebar hover:bg-white/90 sm:w-auto">{c.primary}</Button></Link>{chatUrl && <a href={chatUrl} target="_blank" rel="noopener noreferrer"><Button variant="secondary" className="w-full justify-center border-white/30 bg-transparent px-6 py-3 !text-white hover:bg-white/10 sm:w-auto"><WhatsAppIcon className="h-5 w-5" />{c.chat}</Button></a>}</div></div>
+        <section className="bg-book py-16 text-white sm:py-20">
+          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6"><h2 className="font-display text-3xl font-semibold text-balance">{c.ctaTitle}</h2><p className="mx-auto mt-4 max-w-2xl text-white/70">{c.ctaBody}</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/signup"><Button tint="admin" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.primary}</Button></Link>{chatUrl && <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto"><WhatsAppIcon className="h-5 w-5" />{c.chat}</a>}</div></div>
         </section>
       </main>
 
-      <footer className="bg-[#0B1220] py-14 text-white sm:py-16">
+      <footer className="border-t border-white/10 bg-book py-14 text-white sm:py-16">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.35fr_.7fr_1fr_.8fr] lg:gap-16 lg:px-8">
           <section><RisipLogo className="h-10 w-auto text-role-admin" /><h2 className="mt-6 text-base font-semibold text-white/90">{c.footerAbout}</h2><p className="mt-4 max-w-sm text-sm leading-7 text-white/70">{c.footerAboutText}</p></section>
           <nav aria-label={c.features}><h2 className="text-base font-semibold text-white/90">{c.features}</h2><ul className="mt-5 space-y-3 text-sm"><li><a href="#features" className="text-white/75 transition hover:text-white">{c.features}</a></li><li><a href="#faq" className="text-white/75 transition hover:text-white">{c.footerFaq}</a></li><li><Link to="/login" className="text-white/75 transition hover:text-white">{c.login}</Link></li><li><Link to="/signup" className="text-white/75 transition hover:text-white">{c.primary}</Link></li></ul></nav>
@@ -370,6 +402,42 @@ export default function Landing() {
         <div className="mx-auto mt-12 max-w-7xl border-t border-white/10 px-4 pt-7 text-xs text-white/45 sm:px-6 lg:px-8">© 2026 Risip. {c.footerRights}</div>
       </footer>
       <WhatsAppFloatingButton />
+    </div>
+  );
+}
+
+/** A ruled page with the red margin rule down its left edge. */
+function PaperSection({
+  id, children, tinted = false, narrow = false,
+}: { id?: string; children: React.ReactNode; tinted?: boolean; narrow?: boolean }) {
+  return (
+    <section id={id} className={`relative overflow-hidden py-16 sm:py-20 ${tinted ? 'paper-ruled paper-margin' : 'bg-paper'}`}>
+      <div className={`relative mx-auto px-4 sm:px-6 lg:px-8 ${narrow ? 'max-w-4xl' : 'max-w-7xl'}`}>{children}</div>
+    </section>
+  );
+}
+
+/**
+ * The hero phone. The screenshot is a real Risip conversation, so the frame
+ * draws no status bar or keyboard of its own — the picture already has them.
+ * Height is left to the aspect ratio rather than fixed: a fixed height with a
+ * fixed-width frame is what pushed the image out of the bezel last time.
+ */
+function PhoneMockup() {
+  return (
+    <div className="relative mx-auto w-full max-w-[19rem]">
+      <div aria-hidden="true" className="absolute -inset-6 rounded-[3rem] bg-role-admin/10 blur-2xl" />
+      <div className="relative rounded-[2.5rem] border-[6px] border-[#2C2A28] bg-[#2C2A28] shadow-2xl">
+        <div className="overflow-hidden rounded-[2rem] bg-white">
+          <img
+            src={landingChat}
+            alt="Mazungumzo halisi ya Risip kwenye WhatsApp: mfanyabiashara akiandika mauzo na Risip akijibu"
+            loading="lazy"
+            decoding="async"
+            className="block w-full"
+          />
+        </div>
+      </div>
     </div>
   );
 }

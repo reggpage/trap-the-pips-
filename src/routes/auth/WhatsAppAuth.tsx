@@ -4,7 +4,6 @@ import { CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import AuthShell from '@/components/layout/AuthShell';
 import WhatsAppFloatingButton from '@/components/whatsapp/WhatsAppFloatingButton';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import WhatsAppIcon from '@/components/ui/WhatsappIcon';
 import { buildRisipWhatsAppUrl } from '@/features/whatsapp/publicWhatsApp';
 import { useAuth } from '@/lib/auth';
@@ -54,9 +53,16 @@ const COPY = {
   },
 } as const;
 
-function plausiblePhone(value: string) {
-  const digits = value.replace(/\D/g, '');
-  return digits.length >= 9 && digits.length <= 15;
+/**
+ * The country code is printed on the field, not typed, so this keeps only the
+ * national part. People write their number every way there is — 0712…,
+ * +255712…, 255 712… — and all three mean the same nine digits.
+ */
+function nationalDigits(value: string) {
+  let digits = value.replace(/\D/g, '');
+  if (digits.startsWith('255')) digits = digits.slice(3);
+  if (digits.startsWith('0')) digits = digits.slice(1);
+  return digits.slice(0, 9);
 }
 
 export default function WhatsAppAuth({ mode }: { mode: Mode }) {
@@ -75,7 +81,7 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (!plausiblePhone(phone)) {
+    if (phone.length !== 9) {
       setError(c.invalid);
       return;
     }
@@ -85,7 +91,7 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
       const response = await fetch('/api/auth/whatsapp/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ whatsapp_number: phone, purpose: mode, language: lang }),
+        body: JSON.stringify({ whatsapp_number: `+255${phone}`, purpose: mode, language: lang }),
       });
       if (!response.ok) throw new Error('request failed');
       setPhase('sent');
@@ -101,50 +107,71 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
         {phase === 'sent' ? (
           <div className="text-center">
             <CheckCircle2 className="mx-auto h-11 w-11 text-[#25D366]" />
-            <h1 className="mt-4 text-2xl font-semibold text-ink">{c.sentTitle}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-ink-muted">{c.sentBody}</p>
+            <h1 className="mt-4 font-display text-2xl font-semibold text-white">{c.sentTitle}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-white/60">{c.sentBody}</p>
             {directUrl && (
-              <a href={directUrl} target="_blank" rel="noopener noreferrer" className="mt-6 block">
-                <Button tint="admin" fullWidth className="justify-center gap-2">
-                  <WhatsAppIcon className="h-5 w-5" /> {c.openWhatsApp}
-                </Button>
+              <a href={directUrl} target="_blank" rel="noopener noreferrer" className="mt-6 flex h-12 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:bg-[#25D366]/90">
+                <WhatsAppIcon className="h-5 w-5" /> {c.openWhatsApp}
               </a>
             )}
-            <button type="button" onClick={() => setPhase('form')} className="mt-4 text-sm font-medium text-role-admin hover:underline">
+            <button type="button" onClick={() => setPhase('form')} className="mt-5 text-sm font-semibold text-role-admin hover:underline">
               {lang === 'sw' ? 'Tumia namba nyingine' : 'Use another number'}
             </button>
           </div>
         ) : (
           <>
-            <div className="text-center">
-              <WhatsAppIcon className="mx-auto h-12 w-12 text-[#25D366]" />
-              <h1 className="mt-4 text-2xl font-semibold text-ink">{mode === 'login' ? c.loginTitle : c.registerTitle}</h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{mode === 'login' ? c.loginLead : c.registerLead}</p>
+            {/* Two routes, one component: the segments are links, so the URL
+                still says which page you are on. */}
+            <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+              {([['login', '/login', c.login], ['register', '/signup', c.register]] as const).map(([key, to, label]) => (
+                <Link
+                  key={key}
+                  to={to}
+                  aria-current={mode === key ? 'page' : undefined}
+                  className={`flex-1 rounded-lg py-2.5 text-center text-sm font-semibold transition ${mode === key ? 'bg-role-admin text-white' : 'text-white/60 hover:text-white'}`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <WhatsAppIcon className="mx-auto h-11 w-11 text-[#25D366]" />
+              <h1 className="mt-4 font-display text-2xl font-semibold text-white text-balance">{mode === 'login' ? c.loginTitle : c.registerTitle}</h1>
+              <p className="mt-2 text-sm leading-relaxed text-white/60">{mode === 'login' ? c.loginLead : c.registerLead}</p>
             </div>
 
             <form onSubmit={submit} className="mt-7 flex flex-col gap-4">
-              <Input
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                label={c.phone}
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="+255 7xx xxx xxx"
-              />
-              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-              <Button type="submit" tint="admin" fullWidth disabled={phase === 'sending'} className="justify-center gap-2">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="wa-phone" className="text-sm font-medium text-white/85">{c.phone}</label>
+                <div className="flex gap-2">
+                  <span aria-hidden="true" className="flex h-12 w-[4.25rem] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-[15px] font-semibold text-white/75">+255</span>
+                  <input
+                    id="wa-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    value={phone}
+                    onChange={(event) => setPhone(nationalDigits(event.target.value))}
+                    placeholder="7xx xxx xxx"
+                    aria-describedby="wa-phone-privacy"
+                    className="h-12 w-full min-w-0 rounded-lg border border-white/15 bg-book-soft px-4 text-[15px] text-white placeholder:text-white/30 focus:border-role-admin focus:outline-none focus:ring-2 focus:ring-role-admin/40"
+                  />
+                </div>
+              </div>
+              {error && <p role="alert" className="text-sm text-[#F2A9B4]">{error}</p>}
+              <Button type="submit" tint="admin" fullWidth disabled={phase === 'sending'} className="h-12 justify-center gap-2">
                 {phase === 'sending' ? <Loader2 className="h-4 w-4 animate-spin" /> : <WhatsAppIcon className="h-5 w-5" />}
                 {mode === 'login' ? c.submitLogin : c.submitRegister}
               </Button>
             </form>
 
-            <div className="mt-5 flex items-start justify-center gap-2 text-xs leading-relaxed text-ink-muted">
+            <div id="wa-phone-privacy" className="mt-5 flex items-start justify-center gap-2 text-xs leading-relaxed text-white/40">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-role-admin" />
               <span>{c.privacy}</span>
             </div>
 
-            <p className="mt-6 text-center text-sm text-ink-muted">
+            <p className="mt-6 text-center text-sm text-white/50">
               {mode === 'login' ? c.newHere : c.haveAccount}{' '}
               <Link to={mode === 'login' ? '/signup' : '/login'} className="font-semibold text-role-admin hover:underline">
                 {mode === 'login' ? c.register : c.login}
