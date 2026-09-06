@@ -25,7 +25,44 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
-type Finding = { severity: 'down' | 'warn'; title: string; detail: string };
+type Finding = {
+  severity: 'down' | 'warn';
+  code: string;
+  owner: string;
+  title: string;
+  detail: string;
+};
+
+const WINDOW_MINUTES = 60;
+const THRESHOLDS = {
+  messageFailures: 3,
+  providerFailures: 3,
+  retrievalFailures: 2,
+  toolOrDatabaseFailures: 2,
+  stateFailures: 3,
+  notificationFailures: 3,
+  budgetFailures: 1,
+  deploymentFailures: 1,
+  p95LatencyMs: 15_000,
+  minimumLatencySamples: 5,
+} as const;
+
+function owner(area: 'platform' | 'ai' | 'billing'): string {
+  const fallback = Deno.env.get('OPS_INCIDENT_OWNER') ?? 'RISIP platform owner';
+  if (area === 'ai') return Deno.env.get('OPS_AI_OWNER') ?? fallback;
+  if (area === 'billing') return Deno.env.get('OPS_BILLING_OWNER') ?? fallback;
+  return fallback;
+}
+
+function finding(
+  severity: Finding['severity'],
+  code: string,
+  area: 'platform' | 'ai' | 'billing',
+  title: string,
+  detail: string,
+): Finding {
+  return { severity, code, owner: owner(area), title, detail };
+}
 
 function admin() {
   const url = Deno.env.get('SUPABASE_URL');
@@ -54,19 +91,23 @@ async function probeWebhook(): Promise<Finding | null> {
     });
     if (res.status === 401) return null;
     const body = (await res.text()).slice(0, 200);
-    return {
-      severity: 'down',
-      title: `WhatsApp webhook answered ${res.status}, expected 401`,
-      detail: body.includes('BOOT_ERROR')
+    return finding(
+      'down',
+      'webhook_unhealthy',
+      'platform',
+      `WhatsApp webhook answered ${res.status}, expected 401`,
+      body.includes('BOOT_ERROR')
         ? 'BOOT_ERROR — the function failed to parse. Every incoming message is being dropped right now.'
         : `Unexpected response: ${body}`,
-    };
+    );
   } catch (err) {
-    return {
-      severity: 'down',
-      title: 'WhatsApp webhook did not answer',
-      detail: err instanceof Error ? err.message : 'no response within 10s',
-    };
+    return finding(
+      'down',
+      'webhook_unreachable',
+      'platform',
+      'WhatsApp webhook did not answer',
+      err instanceof Error ? err.message : 'no response within 10s',
+    );
   }
 }
 
@@ -82,11 +123,13 @@ async function healthFindings(db: ReturnType<typeof admin>): Promise<Finding[]> 
     .in('status', ['pending', 'processing'])
     .lt('created_at', since(15));
   if ((stuck ?? 0) > 0) {
-    found.push({
-      severity: 'down',
-      title: `${stuck} message${stuck === 1 ? '' : 's'} stuck for over 15 minutes`,
-      detail: 'Someone typed and has not been answered. Check the WhatsApp ops page.',
-    });
+    found.push(finding(
+      'down',
+      'message_stuck',
+      'platform',
+      `${stuck} message${stuck === 1 ? '' : 's'} stuck for over 15 minutes`,
+      'Someone typed and has not been answered. Check the WhatsApp ops page.',
+    ));
   }
 
   // A burst of failures is different from the occasional one.
@@ -94,25 +137,144 @@ async function healthFindings(db: ReturnType<typeof admin>): Promise<Finding[]> 
     .select('id', { count: 'exact', head: true })
     .eq('status', 'failed')
     .gte('updated_at', since(60));
-  if ((failed ?? 0) >= 3) {
-    found.push({
-      severity: 'warn',
-      title: `${failed} messages failed in the last hour`,
-      detail: 'Above the normal rate. Look at the failure breakdown before it becomes a pattern.',
-    });
+  if ((failed ?? 0) >= THRESHOLDS.messageFailures) {
+    found.push(finding(
+      'warn',
+      'message_failure_burst',
+      'platform',
+      `${failed} messages failed in the last hour`,
+      'Above the pilot threshold. Open WhatsApp ops and identify the first failing runtime.',
+    ));
   }
 
-  // The model or the provider having a bad hour.
-  const { count: providerFailed } = await db.from('whatsapp_ai_interpretations')
+  // Root-cause telemetry deliberately excludes message text and business data.
+  // The watchdog needs the layer and latency only, never what the trader said.
+  const { data: aiRows, error: aiError } = await db.from('whatsapp_ai_interpretations')
+    .select('failure_layer, retrieval_status, tool_result_status, latency_ms')
+    .gte('created_at', since(WINDOW_MINUTES))
+    .limit(1000);
+
+  if (aiError) {
+    found.push(finding(
+      'down',
+      'ai_telemetry_query_failed',
+      'platform',
+      'AI health telemetry could not be read',
+      'The watchdog cannot prove AI health. Check the Phase 10 migration and database availability.',
+    ));
+  } else {
+    const rows = (aiRows ?? []) as Array<{
+      failure_layer: string | null;
+      retrieval_status: string | null;
+      tool_result_status: string | null;
+      latency_ms: number | null;
+    }>;
+    const countLayers = (layers: string[]) => rows.filter((row) =>
+      row.failure_layer != null && layers.includes(row.failure_layer)).length;
+    const providerFailed = countLayers(['provider', 'model']);
+    const retrievalFailed = rows.filter((row) =>
+      row.failure_layer === 'retrieval' || row.retrieval_status === 'unavailable').length;
+    const toolOrDatabaseFailed = rows.filter((row) =>
+      ['tool_schema', 'tool_execution', 'backend_validation', 'database'].includes(row.failure_layer ?? '')
+      || row.tool_result_status === 'error').length;
+    const stateFailed = countLayers(['state']);
+    const budgetFailed = countLayers(['budget']);
+    const deploymentFailed = countLayers(['deployment']);
+
+    if (providerFailed >= THRESHOLDS.providerFailures) {
+      found.push(finding(
+        'warn',
+        'ai_provider_failure_burst',
+        'ai',
+        `${providerFailed} AI model/provider failures in the last hour`,
+        'Check provider status, account credit and the deployed model configuration.',
+      ));
+    }
+    if (retrievalFailed >= THRESHOLDS.retrievalFailures) {
+      found.push(finding(
+        'warn',
+        'rag_failure_burst',
+        'ai',
+        `${retrievalFailed} RAG/catalogue failures in the last hour`,
+        'Check catalogue retrieval, aliases and database connectivity. Do not allow ungrounded answers.',
+      ));
+    }
+    if (toolOrDatabaseFailed >= THRESHOLDS.toolOrDatabaseFailures) {
+      found.push(finding(
+        'down',
+        'tool_backend_failure_burst',
+        'platform',
+        `${toolOrDatabaseFailed} tool/backend failures in the last hour`,
+        'Inspect tool schemas and backend rejection codes before retrying writes.',
+      ));
+    }
+    if (stateFailed >= THRESHOLDS.stateFailures) {
+      found.push(finding(
+        'warn',
+        'conversation_state_failure_burst',
+        'ai',
+        `${stateFailed} conversation-state failures in the last hour`,
+        'Inspect active-question expiry and expected-answer transitions in AI ops.',
+      ));
+    }
+    if (budgetFailed >= THRESHOLDS.budgetFailures) {
+      found.push(finding(
+        'down',
+        'ai_budget_exhausted',
+        'billing',
+        `${budgetFailed} AI request${budgetFailed === 1 ? '' : 's'} blocked by budget in the last hour`,
+        'Check provider credit and RISIP usage limits before users lose AI access.',
+      ));
+    }
+    if (deploymentFailed >= THRESHOLDS.deploymentFailures) {
+      found.push(finding(
+        'down',
+        'runtime_deployment_failure',
+        'platform',
+        `${deploymentFailed} deployment/runtime failure${deploymentFailed === 1 ? '' : 's'} in the last hour`,
+        'Compare the failing runtime version with the last known-good function version and roll back if needed.',
+      ));
+    }
+
+    const latencies = rows.map((row) => row.latency_ms)
+      .filter((value): value is number => Number.isFinite(value))
+      .sort((a, b) => a - b);
+    if (latencies.length >= THRESHOLDS.minimumLatencySamples) {
+      const p95Index = Math.min(latencies.length - 1, Math.ceil(latencies.length * 0.95) - 1);
+      const p95 = latencies[p95Index];
+      if (p95 >= THRESHOLDS.p95LatencyMs) {
+        found.push(finding(
+          'warn',
+          'ai_latency_high',
+          'ai',
+          `AI P95 latency is ${Math.round(p95 / 100) / 10}s in the last hour`,
+          `Pilot threshold is ${THRESHOLDS.p95LatencyMs / 1000}s. Check provider latency, tool loops and database waits.`,
+        ));
+      }
+    }
+  }
+
+  const { count: notificationFailed, error: notificationError } = await db
+    .from('whatsapp_notification_deliveries')
     .select('id', { count: 'exact', head: true })
-    .eq('backend_outcome', 'provider_failed')
-    .gte('created_at', since(60));
-  if ((providerFailed ?? 0) >= 3) {
-    found.push({
-      severity: 'warn',
-      title: `${providerFailed} AI provider failures in the last hour`,
-      detail: 'Check the Anthropic status and the account credit balance.',
-    });
+    .eq('status', 'failed')
+    .gte('updated_at', since(WINDOW_MINUTES));
+  if (notificationError) {
+    found.push(finding(
+      'warn',
+      'notification_queue_query_failed',
+      'platform',
+      'Notification queue health could not be read',
+      'Check the proactive-notification migration and database availability.',
+    ));
+  } else if ((notificationFailed ?? 0) >= THRESHOLDS.notificationFailures) {
+    found.push(finding(
+      'warn',
+      'notification_failure_burst',
+      'platform',
+      `${notificationFailed} proactive notifications failed in the last hour`,
+      'Inspect delivery retries and Meta template/provider status.',
+    ));
   }
 
   return found;
@@ -196,7 +358,7 @@ Deno.serve(async (req) => {
       '',
       findings.length === 0
         ? 'Nothing needs attention right now.'
-        : `Needs attention:\n${findings.map((f) => `- ${f.title}`).join('\n')}`,
+        : `Needs attention:\n${findings.map((f) => `- [${f.code}] ${f.title} — owner: ${f.owner}`).join('\n')}`,
     ].join('\n');
     const sent = await sendEmail('Risip — daily digest', body);
     return Response.json({ ok: true, mode, sent, findings: findings.length });
@@ -218,7 +380,7 @@ Deno.serve(async (req) => {
   const body = [
     `Risip — ${worst}`,
     '',
-    ...findings.map((f) => `${f.title}\n  ${f.detail}`),
+    ...findings.map((f) => `[${f.code}] ${f.title}\n  Owner: ${f.owner}\n  ${f.detail}`),
     '',
     'Admin console: check WhatsApp ops and AI ops.',
   ].join('\n');

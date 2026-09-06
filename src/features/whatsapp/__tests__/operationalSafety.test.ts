@@ -126,4 +126,31 @@ describe('the watchdog', () => {
   it('reports the shops that have gone quiet, which is churn before it is anything else', () => {
     expect(watch).toContain('Shops silent 7+ days');
   });
+
+  it('attributes sustained AI failures instead of treating every error as provider failure', () => {
+    expect(watch).toContain("['tool_schema', 'tool_execution', 'backend_validation', 'database']");
+    expect(watch).toContain("row.failure_layer === 'retrieval'");
+    expect(watch).toContain("countLayers(['budget'])");
+    expect(watch).toContain("countLayers(['deployment'])");
+    expect(watch).toContain("countLayers(['state'])");
+  });
+
+  it('has explicit pilot thresholds for bursts and latency', () => {
+    expect(watch).toContain('const THRESHOLDS = {');
+    expect(watch).toContain('p95LatencyMs: 15_000');
+    expect(watch).toContain('minimumLatencySamples: 5');
+  });
+
+  it('puts an owner and stable code on every incident', () => {
+    expect(watch).toContain("Deno.env.get('OPS_INCIDENT_OWNER')");
+    expect(watch).toContain('code: string;');
+    expect(watch).toContain('owner: string;');
+    expect(watch).toContain('Owner: ${f.owner}');
+  });
+
+  it('checks proactive delivery failures without reading their private payloads', () => {
+    expect(watch).toContain("from('whatsapp_notification_deliveries')");
+    expect(watch).toContain(".select('id', { count: 'exact', head: true })");
+    expect(watch).not.toMatch(/whatsapp_notification_deliveries[^;]+select\('[^']*(phone_e164_snapshot|parameters|last_error)/s);
+  });
 });

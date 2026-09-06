@@ -35,12 +35,15 @@ Verified before production:
 
 ## Remaining Phase 10 gates
 
-- Apply and verify the production migration and deploy the WhatsApp webhook.
-- Publish and verify the existing admin console Site.
+- Production migration `20260906100000` is applied and recorded; WhatsApp
+  webhook version 313 is active.
+- Admin console Site version 12 is published at `admin.risip.online`.
 - Send controlled live WhatsApp probes and confirm new telemetry appears under
   the correct runtime version without ledger side effects.
-- Add alert thresholds and incident ownership for sustained provider, RAG,
-  tool, latency, queue and budget failures.
+- Alert thresholds and incident ownership now cover sustained provider, RAG,
+  tool/database, state, latency, notification queue, deployment and budget
+  failures. The function must still be scheduled and its alert recipient must
+  be explicitly configured before this gate is operational.
 - Run duplicate-delivery, retry-after-uncertain-write and queue recovery drills.
 - Complete the launch role/permission evidence matrix across web and WhatsApp.
 - Run backup/restore and migration rollback drills in a non-production clone.
