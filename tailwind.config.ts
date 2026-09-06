@@ -26,10 +26,6 @@ export default {
           DEFAULT: 'rgb(var(--cover) / <alpha-value>)',
           soft: 'rgb(var(--cover-soft) / <alpha-value>)',
         },
-        paper: {
-          DEFAULT: 'rgb(var(--paper) / <alpha-value>)',
-          rule: 'rgb(var(--paper-rule) / <alpha-value>)',
-        },
       },
       fontFamily: {
         // Outfit is the primary UI face: geometric sans with wide language coverage.

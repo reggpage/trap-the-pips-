@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, Barcode, BarChart3, Bot, Check, CheckCircle2, ChevronDown, Mail, MapPin, Package, Phone, ScanLine, Send, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
+import { ArrowRight, BarChart3, Bot, Check, ChevronDown, ChevronLeft, ChevronRight, Mail, MapPin, Package, Phone, ScanLine, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
 import landingProductsBarcode from '@/assets/landing-products-barcode.jpg';
 import landingCashFlow from '@/assets/landing-cash-flow.jpg';
 import landingWhatsApp from '@/assets/landing-whatsapp.jpg';
@@ -8,6 +8,7 @@ import landingRisipAi from '@/assets/landing-risip-ai.jpg';
 import landingShop from '@/assets/landing-shop.jpg';
 import landingChat from '@/assets/landing-chat.jpeg';
 import Button from '@/components/ui/Button';
+import LanguageToggle from '@/components/ui/LanguageToggle';
 import RisipLogo from '@/components/ui/RisipLogo';
 import WhatsAppFloatingButton from '@/components/whatsapp/WhatsAppFloatingButton';
 import WhatsAppIcon from '@/components/ui/WhatsappIcon';
@@ -183,14 +184,15 @@ export default function Landing() {
   if (auth.status === 'signed-in' && auth.profile) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div className="min-h-screen bg-white text-ink">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-book/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to="/" aria-label="Risip" className="text-white"><RisipLogo className="h-10 w-auto" /></Link>
+          <Link to="/" aria-label="Risip" className="text-role-admin"><RisipLogo className="h-10 w-auto" /></Link>
           <nav className="flex items-center gap-1 sm:gap-3">
             <a href="#features" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.features}</a>
             <a href="#pricing" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.pricingNav}</a>
             <a href="#faq" className="hidden px-3 py-2 text-sm font-medium text-white/65 hover:text-white sm:block">{c.faqNav}</a>
+            <LanguageToggle />
             <Link to="/login" className="px-3 py-2 text-sm font-semibold text-white/80 hover:text-white">{c.login}</Link>
             <Link to="/signup" className="hidden sm:block"><Button tint="admin">{c.start}</Button></Link>
           </nav>
@@ -208,7 +210,7 @@ export default function Landing() {
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">{c.lead}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Link to="/signup"><Button tint="admin" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.primary}<ArrowRight className="h-4 w-4" /></Button></Link>
-                <Link to="/login" className="inline-flex w-full items-center justify-center rounded-lg border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto">{c.secondary}</Link>
+                <Link to="/login" className="inline-flex w-full items-center justify-center rounded-sm border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto">{c.secondary}</Link>
               </div>
               <ul className="mt-9 grid gap-3 text-sm text-white/60 sm:grid-cols-3">
                 {c.trust.map((item) => <li key={item} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#25D366]" />{item}</li>)}
@@ -225,7 +227,7 @@ export default function Landing() {
           <div className="absolute inset-0 bg-gradient-to-t from-book/70 via-book/10 to-transparent" />
         </section>
 
-        <PaperSection>
+        <Section>
           <div className="mx-auto max-w-2xl text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.howTitle}</h2><p className="mt-3 text-ink-muted">{c.howLead}</p></div>
           <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
             {c.steps.map(([title, body], index) => { const Icon = STEP_ICONS[index]; return (
@@ -239,17 +241,14 @@ export default function Landing() {
               </li>
             ); })}
           </ol>
-        </PaperSection>
+        </Section>
 
-        <PaperSection id="features" tinted>
+        <Section id="features" tinted>
           <div className="mx-auto max-w-2xl text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.featureTitle}</h2><p className="mt-3 text-ink-muted">{c.featureLead}</p></div>
-          <div className="mt-12"><HeroShowcaseCarousel /></div>
-          <div className="mt-16 grid gap-6 sm:grid-cols-2">
-            {c.cards.map(([title, body], index) => { const Icon = FEATURE_ICONS[index]; return <article key={title} className="group overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><img src={FEATURE_IMAGES[index]} alt={title} loading="lazy" decoding="async" className="h-52 w-full object-cover transition duration-500 group-hover:scale-[1.02]" /><div className="p-6"><Icon className="h-6 w-6 text-role-admin" /><h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-ink-muted">{body}</p></div></article>; })}
-          </div>
-        </PaperSection>
+          <FeatureCarousel cards={c.cards} lang={lang} />
+        </Section>
 
-        <section id="pricing" className="relative overflow-hidden bg-paper py-16 sm:py-20">
+        <section id="pricing" className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl font-semibold text-balance">{c.pricing.title}</h2>
@@ -280,7 +279,7 @@ export default function Landing() {
                 return (
                 <article
                   key={plan.name}
-                  className={`relative flex flex-col rounded-2xl p-8 shadow-sm ${dark ? 'bg-book text-white shadow-xl lg:-mt-4 lg:mb-4' : 'border border-ink/10 bg-white'}`}
+                  className={`relative flex flex-col rounded-sm p-8 shadow-sm ${dark ? 'bg-book text-white shadow-xl lg:-mt-4 lg:mb-4' : 'border border-ink/10 bg-white'}`}
                 >
                   {/* Sentence case, not shouted. "WENGI HUCHAGUA" in capitals
                       also wrapped onto two lines and pushed the card's heading
@@ -297,7 +296,7 @@ export default function Landing() {
                     <span className="font-display text-4xl font-semibold tabular-nums tracking-tight">{yearly ? plan.y : plan.m}</span>
                   </div>
                   <p className={`mt-1 text-sm ${dark ? 'text-white/55' : 'text-ink-muted'}`}>{yearly ? c.pricing.perYear : c.pricing.perMonth}</p>
-                  <div className={`mt-5 rounded-lg px-4 py-3 text-sm ${dark ? 'bg-white/10' : 'bg-paper'}`}>
+                  <div className={`mt-5 rounded-sm px-4 py-3 text-sm ${dark ? 'bg-white/10' : 'bg-white'}`}>
                     <span className={`font-bold tabular-nums ${dark ? 'text-white' : 'text-ink'}`}>{plan.cap}</span>
                     <span className={dark ? 'text-white/55' : 'text-ink-muted'}> {c.pricing.msgs}</span>
                   </div>
@@ -317,7 +316,7 @@ export default function Landing() {
                     })}
                   </ul>
                   {dark ? (
-                    <Link to="/signup" className="mt-8 flex h-12 items-center justify-center rounded-lg bg-role-admin px-4 text-sm font-semibold text-white transition hover:bg-role-admin/90">
+                    <Link to="/signup" className="mt-8 flex h-12 items-center justify-center rounded-sm bg-role-admin px-4 text-sm font-semibold text-white transition hover:bg-role-admin/90">
                       {c.pricing.cta}
                     </Link>
                   ) : (
@@ -336,7 +335,7 @@ export default function Landing() {
 
             <div className="mt-16">
               <h3 className="text-center font-display text-xl font-semibold">{c.pricing.compareTitle}</h3>
-              <div className="mt-6 overflow-x-auto rounded-2xl border border-ink/10 bg-white shadow-sm">
+              <div className="mt-6 overflow-x-auto rounded-sm border border-ink/10 bg-white shadow-sm">
                 <table className="w-full min-w-[44rem] text-sm">
                   <thead>
                     <tr className="border-b border-ink/10">
@@ -372,7 +371,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <PaperSection id="faq" tinted narrow>
+        <Section id="faq" narrow>
           <div className="text-center"><h2 className="font-display text-3xl font-semibold text-balance">{c.faqTitle}</h2><p className="mt-3 text-ink-muted">{c.faqLead}</p></div>
           <div className="mt-12 divide-y divide-ink/10 border-y border-ink/10">
             {c.faqs.map(([question, answer]) => (
@@ -385,10 +384,10 @@ export default function Landing() {
               </details>
             ))}
           </div>
-        </PaperSection>
+        </Section>
 
         <section className="bg-book py-16 text-white sm:py-20">
-          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6"><h2 className="font-display text-3xl font-semibold text-balance">{c.ctaTitle}</h2><p className="mx-auto mt-4 max-w-2xl text-white/70">{c.ctaBody}</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/signup"><Button tint="admin" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.primary}</Button></Link>{chatUrl && <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto"><WhatsAppIcon className="h-5 w-5" />{c.chat}</a>}</div></div>
+          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6"><h2 className="font-display text-3xl font-semibold text-balance">{c.ctaTitle}</h2><p className="mx-auto mt-4 max-w-2xl text-white/70">{c.ctaBody}</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/signup"><Button tint="admin" className="w-full justify-center px-6 py-3 text-base sm:w-auto">{c.primary}</Button></Link>{chatUrl && <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-sm border border-white/25 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto"><WhatsAppIcon className="h-5 w-5" />{c.chat}</a>}</div></div>
         </section>
       </main>
 
@@ -399,21 +398,134 @@ export default function Landing() {
           <section><h2 className="text-base font-semibold text-white/90">{c.footerContact}</h2><address className="mt-5 space-y-4 text-sm not-italic text-white/75"><p className="flex items-start gap-3"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-role-admin" /><a className="break-all transition hover:text-white" href="mailto:reaganfraizer13@gmail.com">reaganfraizer13@gmail.com</a></p><p className="flex items-center gap-3"><Phone className="h-4 w-4 shrink-0 text-role-admin" /><a className="transition hover:text-white" href="tel:+255624107354">0624 107 354</a></p><p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-role-admin" /><span>Mbezi Shule<br />Dar es Salaam, Tanzania</span></p></address></section>
           <section><h2 className="text-base font-semibold text-white/90">{c.footerFaq}</h2><p className="mt-5 text-sm leading-6 text-white/70">{c.footerFaqLink}</p>{chatUrl && <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#25D366]/35 px-4 py-2.5 text-sm font-semibold text-[#25D366] transition hover:bg-[#25D366]/10"><WhatsAppIcon className="h-5 w-5" />{c.chat}</a>}</section>
         </div>
-        <div className="mx-auto mt-12 max-w-7xl border-t border-white/10 px-4 pt-7 text-xs text-white/45 sm:px-6 lg:px-8">© 2026 Risip. {c.footerRights}</div>
+        <div className="mx-auto mt-12 flex max-w-7xl flex-col items-start gap-4 border-t border-white/10 px-4 pt-7 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"><span>© 2026 Risip. {c.footerRights}</span><LanguageToggle /></div>
       </footer>
       <WhatsAppFloatingButton />
     </div>
   );
 }
 
-/** A ruled page with the red margin rule down its left edge. */
-function PaperSection({
+/** A white band. `tinted` only draws the hairlines that separate one from the next. */
+function Section({
   id, children, tinted = false, narrow = false,
 }: { id?: string; children: React.ReactNode; tinted?: boolean; narrow?: boolean }) {
   return (
-    <section id={id} className={`relative overflow-hidden py-16 sm:py-20 ${tinted ? 'paper-ruled paper-margin' : 'bg-paper'}`}>
+    <section id={id} className={`relative overflow-hidden bg-white py-16 sm:py-20 ${tinted ? 'border-y border-ink/10' : ''}`}>
       <div className={`relative mx-auto px-4 sm:px-6 lg:px-8 ${narrow ? 'max-w-4xl' : 'max-w-7xl'}`}>{children}</div>
     </section>
+  );
+}
+
+/**
+ * The four capability cards, as a carousel.
+ *
+ * One card at a time on a phone, two on a tablet, three on a desktop, and the
+ * track slides by whole pages. It advances itself every 4 seconds and stops
+ * while the pointer or the keyboard is inside it, so it never moves the card
+ * somebody is reading. The manual controls also restart the clock, so a click
+ * is never immediately undone by a scheduled advance.
+ */
+function FeatureCarousel({ cards, lang }: { cards: readonly (readonly [string, string])[]; lang: 'sw' | 'en' }) {
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const read = () => setPerPage(window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1);
+    read();
+    window.addEventListener('resize', read);
+    return () => window.removeEventListener('resize', read);
+  }, []);
+
+  // The track slides by ONE card and stops when the last card reaches the
+  // right edge. Sliding a whole page at a time left the final page padded with
+  // empty slots whenever the cards did not divide evenly into it.
+  const pages = Math.max(1, cards.length - perPage + 1);
+  const current = Math.min(page, pages - 1);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    if (paused || reduceMotion || pages < 2) return;
+    const timer = window.setTimeout(() => setPage((p) => (Math.min(p, pages - 1) + 1) % pages), 4000);
+    return () => window.clearTimeout(timer);
+  }, [paused, pages, current, tick]);
+
+  const go = (next: number) => { setPage((next + pages) % pages); setTick((t) => t + 1); };
+
+  return (
+    <div
+      aria-roledescription="carousel"
+      aria-label={lang === 'sw' ? 'Uwezo wa Risip' : 'What Risip does'}
+      className="relative mt-12"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false); }}
+    >
+      <div className="overflow-hidden">
+        <div
+          className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+          style={{ transform: `translateX(-${(current * 100) / perPage}%)` }}
+        >
+          {cards.map(([title, body], index) => {
+            const Icon = FEATURE_ICONS[index];
+            const onScreen = index >= current && index < current + perPage;
+            return (
+              <article
+                key={title}
+                aria-hidden={!onScreen}
+                className="min-w-0 shrink-0 px-2 first:pl-0 last:pr-0"
+                style={{ width: `${100 / perPage}%` }}
+              >
+                <div className="h-full overflow-hidden border border-ink/10 bg-white shadow-sm">
+                  <img src={FEATURE_IMAGES[index]} alt="" loading="lazy" decoding="async" className="h-48 w-full object-cover" />
+                  <div className="p-6">
+                    <Icon className="h-6 w-6 text-role-admin" />
+                    <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-ink-muted">{body}</p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+
+      {pages > 1 && (
+        <div className="mt-7 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => go(current - 1)}
+            aria-label={lang === 'sw' ? 'Kadi zilizotangulia' : 'Previous cards'}
+            className="flex h-9 w-9 items-center justify-center border border-ink/15 text-ink-muted transition hover:border-role-admin hover:text-role-admin"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex gap-2" role="tablist">
+            {Array.from({ length: pages }, (_, index) => (
+              <button
+                key={index}
+                type="button"
+                role="tab"
+                aria-selected={index === current}
+                aria-label={`${lang === 'sw' ? 'Kadi' : 'Card'} ${index + 1}`}
+                onClick={() => go(index)}
+                className={`h-2 transition-all duration-300 ${index === current ? 'w-7 bg-role-admin' : 'w-2 bg-ink/20 hover:bg-ink/40'}`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => go(current + 1)}
+            aria-label={lang === 'sw' ? 'Kadi zinazofuata' : 'Next cards'}
+            className="flex h-9 w-9 items-center justify-center border border-ink/15 text-ink-muted transition hover:border-role-admin hover:text-role-admin"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -438,151 +550,6 @@ function PhoneMockup() {
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-const SHOWCASE_LABELS = ['Barcode na bidhaa', 'Mauzo kupitia WhatsApp', 'Madeni kupitia WhatsApp'] as const;
-
-function HeroShowcaseCarousel() {
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    if (paused || reduceMotion) return;
-    const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % SHOWCASE_LABELS.length);
-    }, 5500);
-    return () => window.clearInterval(timer);
-  }, [paused]);
-
-  return (
-    <section
-      aria-label="Mifano ya Risip kwa barcode na WhatsApp"
-      aria-roledescription="carousel"
-      className="mx-auto min-w-0 w-full max-w-[38rem]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
-      }}
-    >
-      <div className="overflow-hidden rounded-3xl shadow-2xl shadow-role-admin/10">
-        <div
-          className="flex min-w-0 transition-transform duration-700 ease-in-out motion-reduce:transition-none"
-          style={{ transform: `translateX(-${activeSlide * 100}%)` }}
-        >
-          <div className="w-full min-w-0 shrink-0" aria-hidden={activeSlide !== 0}><BarcodeScannerDemo /></div>
-          <div className="w-full min-w-0 shrink-0" aria-hidden={activeSlide !== 1}><WhatsAppSalesDemo /></div>
-          <div className="w-full min-w-0 shrink-0" aria-hidden={activeSlide !== 2}><WhatsAppDebtDemo /></div>
-        </div>
-      </div>
-
-      <div className="mt-5 flex items-center justify-center gap-2" role="tablist" aria-label="Chagua mfano wa Risip">
-        {SHOWCASE_LABELS.map((label, index) => (
-          <button
-            key={label}
-            type="button"
-            role="tab"
-            aria-selected={activeSlide === index}
-            aria-label={`Onyesha ${label}`}
-            onClick={() => setActiveSlide(index)}
-            className={`h-2.5 rounded-full transition-all duration-300 ${activeSlide === index ? 'w-8 bg-role-admin' : 'w-2.5 bg-ink-muted/25 hover:bg-ink-muted/50'}`}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function BarcodeScannerDemo() {
-  return (
-    <article className="flex min-h-[480px] w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface">
-      <header className="flex items-center gap-3 border-b border-surface-border px-5 py-4">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-role-admin/10 text-role-admin"><Barcode className="h-5 w-5" /></span>
-        <div><h2 className="text-sm font-bold text-ink">Sajili bidhaa kwa barcode</h2><p className="mt-0.5 text-xs text-ink-muted">Scan, tambua na panga bidhaa haraka</p></div>
-      </header>
-
-      <div className="relative h-56 overflow-hidden bg-sidebar">
-        <img src={landingProductsBarcode} alt="Kamera ikisoma barcode ya bidhaa" className="h-full w-full object-cover opacity-80" />
-        <div className="absolute inset-6 rounded-2xl border-2 border-white/90">
-          <span className="absolute left-3 right-3 top-1/2 h-0.5 bg-role-admin shadow-[0_0_12px_rgba(221,45,74,.9)]" />
-          <span className="absolute left-3 top-3 h-6 w-6 border-l-4 border-t-4 border-white" />
-          <span className="absolute right-3 top-3 h-6 w-6 border-r-4 border-t-4 border-white" />
-          <span className="absolute bottom-3 left-3 h-6 w-6 border-b-4 border-l-4 border-white" />
-          <span className="absolute bottom-3 right-3 h-6 w-6 border-b-4 border-r-4 border-white" />
-        </div>
-        <div className="absolute inset-x-4 bottom-3 rounded-full bg-black/65 px-3 py-2 text-center text-[11px] font-medium text-white sm:text-xs">Linganisha barcode ndani ya kisanduku</div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 className="h-5 w-5" />Barcode imesomwa</div>
-        <div className="mt-4 rounded-2xl border border-surface-border bg-surface-muted/45 p-4">
-          <div className="flex items-start justify-between gap-4"><div><p className="font-bold text-ink">Daftari A4</p><p className="mt-1 font-mono text-[11px] text-ink-muted">6161100252007</p></div><span className="rounded-full bg-role-admin/10 px-3 py-1 text-xs font-semibold text-role-admin">Bidhaa mpya</span></div>
-          <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 text-xs"><div className="min-w-0"><p className="text-ink-muted">Bei ya kuuza</p><p className="mt-1 font-bold text-ink">TSh 2,500</p></div><div className="min-w-0 text-right"><p className="text-ink-muted">Stock</p><p className="mt-1 font-bold text-ink">48 pcs</p></div></div>
-        </div>
-        <div className="mt-4 flex items-center gap-2 text-xs text-ink-muted"><Check className="h-4 w-4 text-emerald-600" />Imeongezwa na kupangwa kwenye bidhaa zako</div>
-      </div>
-    </article>
-  );
-}
-
-function WhatsAppHeader({ title }: { title: string }) {
-  return (
-    <header className="flex items-center gap-3 border-b border-surface-border bg-surface px-5 py-4">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white"><WhatsAppIcon className="h-5 w-5" /></span>
-      <div className="min-w-0"><h2 className="truncate text-sm font-bold text-ink">{title}</h2><p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted"><span className="h-2 w-2 rounded-full bg-[#25D366]" />Inapatikana</p></div>
-    </header>
-  );
-}
-
-function WhatsAppSalesDemo() {
-  return (
-    <article className="flex min-h-[480px] w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface">
-      <WhatsAppHeader title="Rekodi mauzo kupitia WhatsApp" />
-      <div className="flex flex-1 flex-col gap-3 bg-[#EFEAE2] p-4 text-[13px] leading-relaxed">
-        <ChatBubble side="user" time="10:10">Leo nimeuza daftari 10 kila moja 1,500 na kalamu 20 kila moja 500</ChatBubble>
-        <ChatBubble side="risip" time="10:10"><strong>Nimeelewa mauzo:</strong><br />Daftari: 10 × TSh 1,500 = TSh 15,000<br />Kalamu: 20 × TSh 500 = TSh 10,000<br /><strong>Jumla: TSh 25,000</strong><br /><br />Jibu NDIYO kuthibitisha.</ChatBubble>
-        <ChatBubble side="user" time="10:11">NDIYO</ChatBubble>
-        <ChatBubble side="risip" time="10:11">Mauzo ya <strong>TSh 25,000</strong> yamerekodiwa na stock imesasishwa.</ChatBubble>
-      </div>
-      <DemoComposer text="Andika mauzo ya leo" />
-    </article>
-  );
-}
-
-function WhatsAppDebtDemo() {
-  return (
-    <article className="flex min-h-[480px] w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface">
-      <WhatsAppHeader title="Fuatilia madeni kupitia WhatsApp" />
-      <div className="flex flex-1 flex-col gap-3 bg-[#EFEAE2] p-4 text-[13px] leading-relaxed">
-        <ChatBubble side="user" time="14:20">Asha amechukua vitabu kwa mkopo TSh 24,000, atalipa Ijumaa</ChatBubble>
-        <ChatBubble side="risip" time="14:20"><strong>Nimeelewa deni:</strong><br />Mteja: Asha<br />Kiasi: <strong>TSh 24,000</strong><br />Atalipa: Ijumaa<br /><br />Jibu NDIYO kuthibitisha.</ChatBubble>
-        <ChatBubble side="user" time="14:21">NDIYO</ChatBubble>
-        <ChatBubble side="risip" time="14:21">Deni la Asha limerekodiwa. Nitakusaidia kulifuatilia hadi litakapolipwa.</ChatBubble>
-      </div>
-      <DemoComposer text="Andika deni au malipo" />
-    </article>
-  );
-}
-
-function DemoComposer({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2 border-t border-surface-border bg-surface p-3">
-      <div className="flex min-w-0 flex-1 items-center rounded-full bg-surface-muted px-4 py-2.5 text-xs text-ink-muted">{text}</div>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white" aria-hidden="true"><Send className="h-4 w-4" /></span>
-    </div>
-  );
-}
-
-function ChatBubble({ side, time, children }: { side: 'user' | 'risip'; time: string; children: React.ReactNode }) {
-  const isUser = side === 'user';
-  return (
-    <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 shadow-sm ${isUser ? 'ml-auto rounded-tr-sm bg-[#D9FDD3]' : 'mr-auto rounded-tl-sm bg-white'}`}>
-      <p className="text-ink">{children}</p>
-      <p className="mt-1 text-right text-[10px] text-ink-muted/75">{time}</p>
     </div>
   );
 }

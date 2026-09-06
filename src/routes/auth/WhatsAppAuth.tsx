@@ -110,7 +110,7 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
             <h1 className="mt-4 font-display text-2xl font-semibold text-white">{c.sentTitle}</h1>
             <p className="mt-3 text-sm leading-relaxed text-white/60">{c.sentBody}</p>
             {directUrl && (
-              <a href={directUrl} target="_blank" rel="noopener noreferrer" className="mt-6 flex h-12 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:bg-[#25D366]/90">
+              <a href={directUrl} target="_blank" rel="noopener noreferrer" className="mt-6 flex h-12 items-center justify-center gap-2 rounded-sm bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:bg-[#25D366]/90">
                 <WhatsAppIcon className="h-5 w-5" /> {c.openWhatsApp}
               </a>
             )}
@@ -122,13 +122,13 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
           <>
             {/* Two routes, one component: the segments are links, so the URL
                 still says which page you are on. */}
-            <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+            <div className="flex rounded-sm border border-white/10 bg-white/5 p-1">
               {([['login', '/login', c.login], ['register', '/signup', c.register]] as const).map(([key, to, label]) => (
                 <Link
                   key={key}
                   to={to}
                   aria-current={mode === key ? 'page' : undefined}
-                  className={`flex-1 rounded-lg py-2.5 text-center text-sm font-semibold transition ${mode === key ? 'bg-role-admin text-white' : 'text-white/60 hover:text-white'}`}
+                  className={`flex-1 rounded-sm py-2.5 text-center text-sm font-semibold transition ${mode === key ? 'bg-role-admin text-white' : 'text-white/60 hover:text-white'}`}
                 >
                   {label}
                 </Link>
@@ -145,7 +145,7 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
               <div className="flex flex-col gap-2">
                 <label htmlFor="wa-phone" className="text-sm font-medium text-white/85">{c.phone}</label>
                 <div className="flex gap-2">
-                  <span aria-hidden="true" className="flex h-12 w-[4.25rem] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-[15px] font-semibold text-white/75">+255</span>
+                  <span aria-hidden="true" className="flex h-12 w-[4.25rem] shrink-0 items-center justify-center rounded-sm border border-white/15 bg-white/10 text-[15px] font-semibold text-white/75">+255</span>
                   <input
                     id="wa-phone"
                     type="tel"
@@ -155,12 +155,12 @@ export default function WhatsAppAuth({ mode }: { mode: Mode }) {
                     onChange={(event) => setPhone(nationalDigits(event.target.value))}
                     placeholder="7xx xxx xxx"
                     aria-describedby="wa-phone-privacy"
-                    className="h-12 w-full min-w-0 rounded-lg border border-white/15 bg-book-soft px-4 text-[15px] text-white placeholder:text-white/30 focus:border-role-admin focus:outline-none focus:ring-2 focus:ring-role-admin/40"
+                    className="h-12 w-full min-w-0 rounded-sm border border-white/15 bg-book-soft px-4 text-[15px] text-white placeholder:text-white/30 focus:border-role-admin focus:outline-none focus:ring-2 focus:ring-role-admin/40"
                   />
                 </div>
               </div>
               {error && <p role="alert" className="text-sm text-[#F2A9B4]">{error}</p>}
-              <Button type="submit" tint="admin" fullWidth disabled={phase === 'sending'} className="h-12 justify-center gap-2">
+              <Button type="submit" tint="admin" fullWidth disabled={phase === 'sending'} className="h-12 justify-center gap-2 !rounded-sm">
                 {phase === 'sending' ? <Loader2 className="h-4 w-4 animate-spin" /> : <WhatsAppIcon className="h-5 w-5" />}
                 {mode === 'login' ? c.submitLogin : c.submitRegister}
               </Button>

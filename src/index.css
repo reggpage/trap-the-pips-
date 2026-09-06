@@ -17,13 +17,10 @@
   --ink: 15 23 42;
   --ink-muted: 71 85 105;
 
-  /* Exercise-book palette, used by the marketing and auth pages only. The app
-     itself stays on the surface/ink tokens above. "cover" is the dark card
-     stock of a Tanzanian exercise book; "paper" is the ruled page inside. */
+  /* The dark card stock of a Tanzanian exercise book. Used by the marketing
+     and auth pages only; the app itself stays on surface/ink. */
   --cover: 28 25 23;
   --cover-soft: 36 34 32;
-  --paper: 253 252 249;
-  --paper-rule: 219 226 236;
 
   color-scheme: light;
 }
@@ -44,59 +41,6 @@ input[type='password']::-webkit-contacts-auto-fill-button {
   display: none !important;
   visibility: hidden;
   pointer-events: none;
-}
-
-/* Ruled page. The rules are drawn, not an image, so they stay crisp at any
-   zoom and cost nothing to download. The margin rule sits at 2.75rem on
-   phones where the page is narrow, and further in on wider screens. */
-.paper-ruled {
-  background-color: rgb(var(--paper));
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 2.25rem,
-    rgb(var(--paper-rule) / 0.7) 2.25rem,
-    rgb(var(--paper-rule) / 0.7) calc(2.25rem + 1px)
-  );
-  background-position: 0 1.5rem;
-}
-
-.paper-margin::before {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  left: 1.75rem;
-  width: 1px;
-  background: rgb(var(--role-admin) / 0.28);
-}
-
-@media (min-width: 640px) {
-  .paper-margin::before { left: 3rem; }
-}
-
-/* The typing line in the hero chat. Width animates to a measured pixel value,
-   not a percentage: a percentage resolves against the flex row, which parks
-   the caret far past the end of the text. */
-@keyframes risip-type {
-  from { width: 0; }
-  to   { width: var(--type-width); }
-}
-@keyframes risip-caret {
-  50% { opacity: 0; }
-}
-.typing-line {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  vertical-align: bottom;
-  animation: risip-type 2.4s steps(28, end) infinite alternate;
-}
-.typing-caret {
-  animation: risip-caret 1s step-end infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .typing-line { animation: none; width: var(--type-width); }
-  .typing-caret { animation: none; }
 }
 
 /* Toast slide-in — used by Toaster. Standard cubic-bezier ease-out, 200ms. */
