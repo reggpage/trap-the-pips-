@@ -45,10 +45,19 @@ Verified before production:
   failures. The function must still be scheduled and its alert recipient must
   be explicitly configured before this gate is operational.
 - Run duplicate-delivery, retry-after-uncertain-write and queue recovery drills.
-- Complete the launch role/permission evidence matrix across web and WhatsApp.
+- The isolated production rollback proof passed again on 6 September 2026: a
+  worker confirmed their own records without boss approval, another actor and
+  cross-company confirmation were rejected, confirmation retry did not repeat
+  stock/audit effects, supplier overpayment rolled back, and all synthetic data
+  was absent after rollback. True concurrent-connection recovery remains open.
+- Complete the remaining web role/permission evidence; the WhatsApp/backend
+  permission proof is recorded in `phase-10-pilot-go-no-go.md`.
 - Run backup/restore and migration rollback drills in a non-production clone.
 - Establish pilot acceptance thresholds and a go/no-go checklist for St. Ritha.
 
 This checkpoint is not launch approval. Phase 10 is complete only after the
 remaining production drills have evidence and every accepted limitation is
 recorded.
+
+Operational response and launch decision criteria are in
+`phase-10-incident-runbook.md` and `phase-10-pilot-go-no-go.md`.
