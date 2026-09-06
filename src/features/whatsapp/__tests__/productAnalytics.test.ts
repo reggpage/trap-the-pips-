@@ -140,6 +140,50 @@ describe('WhatsApp product analytics', () => {
     expect(productAnalyticsReply(request, items, 'en')).toContain('For today');
     expect(productAnalyticsReply(request, items, 'en')).not.toContain('Mauzo');
   });
+
+  it('returns a verified total across every product even though the ranking shows only five', () => {
+    const request = {
+      rankBy: 'quantity' as const,
+      direction: 'best' as const,
+      period: 'week' as const,
+      compareNames: [],
+      range: {
+        from: '2026-08-23T21:00:00.000Z',
+        to: '2026-08-30T21:00:00.000Z',
+        sw: 'wiki iliyopita',
+        en: 'last week',
+      },
+    };
+    const items = aggregateProducts(Array.from({ length: 7 }, (_, index) => ({
+      description: `bidhaa ${index + 1}`,
+      quantity: index + 1,
+      lineTotal: (index + 1) * 1_000,
+      occurredAt: '2026-08-25T08:00:00Z',
+      unit: 'kipande',
+    })), []);
+    const reply = productAnalyticsReply(request, items, 'sw');
+    expect(reply).toContain('Jumla ya bidhaa zote zilizouzwa');
+    expect(reply).toContain('*28 vipande*');
+    expect(reply).toContain('Bidhaa tofauti: 7');
+    expect(reply.match(/^\d+\./gm)).toHaveLength(5);
+  });
+
+  it('never adds unlike measures into one meaningless quantity', () => {
+    const request = {
+      rankBy: 'quantity' as const,
+      direction: 'best' as const,
+      period: 'week' as const,
+      compareNames: [],
+    };
+    const items = aggregateProducts([
+      { description: 'mafuta ya kula', quantity: 3, lineTotal: 12_000, occurredAt: '2026-08-25T08:00:00Z', unit: 'lita' },
+      { description: 'sabuni', quantity: 4, lineTotal: 8_000, occurredAt: '2026-08-25T08:00:00Z', unit: 'vipande' },
+    ], []);
+    const reply = productAnalyticsReply(request, items, 'sw');
+    expect(reply).toContain('3 lita');
+    expect(reply).toContain('4 vipande');
+    expect(reply).not.toContain('7 vipande');
+  });
 });
 
 describe('ranking by margin when some products have no buying cost', () => {

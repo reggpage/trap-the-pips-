@@ -505,6 +505,7 @@ const ALL_ASSISTANT_TOOLS: ToolDefinition[] = [
     'get_product_performance',
     'Reads confirmed product figures for one product, several, or a ranking across all of them (empty array). Product names come from the message or the conversation. '
       + 'THE METRIC IS THE QUESTION. quantity is HOW MANY left the shelf — pieces, kilos, litres. revenue is HOW MUCH MONEY those sales brought in. margin is what was left after cost. '
+      + 'The result includes a verified total across EVERY matching product as well as a top-five ranking. When the user asks for the total, answer that total directly; do not claim the tool only has the top five. Quantities with different units stay separate. '
       + 'WHEN IN DOUBT IT IS MONEY. A shopkeeper asking about their own sales usually means the takings, so a question that does not name a counting word is revenue. Quantity is what a question asks for when it names the thing being counted — pieces, kilos, litres, how many. Answering a money question with a piece-count is a different question answered confidently, which is worse than asking. '
       + 'Follow-ups inherit the product and period already under discussion and only change the metric. '
       + 'ALWAYS set direction to "worst" with metric "margin" for any question about LOSS — “je kuna hasara?”, “bidhaa gani inaleta hasara”, “what am I losing money on”, “below cost”. Sales minus expenses can never show a loss on a product; only this can.',

@@ -40,6 +40,7 @@ export type ProductSaleLine = {
   quantity: number;
   lineTotal: number;
   occurredAt: string;
+  unit?: string | null;
 };
 
 export type ProductCostPoint = {
@@ -54,6 +55,8 @@ export type ProductAggregate = {
   revenue: number;
   margin: number | null;
   costed: boolean;
+  /** Quantities stay separated by measure; litres must never be added to pieces. */
+  quantityByUnit?: Record<string, number>;
 };
 
 const clean = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
@@ -61,6 +64,37 @@ const clean = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N} ]/gu,
 /** Negatives keep their sign: "−1,200" is the whole point of a loss line. */
 const money = (value: number) =>
   `${value < 0 ? '−' : ''}TSh ${Math.abs(Math.round(value)).toLocaleString('en-US')}`;
+
+function quantityUnit(unit: string | null | undefined): string {
+  const value = clean(unit ?? '');
+  if (!value || ['kipande', 'vipande', 'piece', 'pieces', 'pcs', 'count'].includes(value)) return 'piece';
+  if (['kilo', 'kilos', 'kg'].includes(value)) return 'kilo';
+  if (['lita', 'litre', 'litres', 'liter', 'liters'].includes(value)) return 'lita';
+  return value;
+}
+
+function quantityLabel(unit: string, lang: Lang): string {
+  if (unit === 'piece') return lang === 'sw' ? 'vipande' : 'pieces';
+  if (unit === 'kilo') return lang === 'sw' ? 'kilo' : 'kg';
+  if (unit === 'lita') return lang === 'sw' ? 'lita' : 'litres';
+  return unit;
+}
+
+function quantityText(items: ProductAggregate[], lang: Lang): string {
+  const totals = new Map<string, number>();
+  for (const item of items) {
+    const quantities = item.quantityByUnit && Object.keys(item.quantityByUnit).length > 0
+      ? item.quantityByUnit
+      : { piece: item.quantity };
+    for (const [unit, quantity] of Object.entries(quantities)) {
+      totals.set(unit, (totals.get(unit) ?? 0) + quantity);
+    }
+  }
+  return [...totals.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([unit, quantity]) => `${quantity.toLocaleString('en-US')} ${quantityLabel(unit, lang)}`)
+    .join(', ');
+}
 
 export function parseProductAnalyticsRequest(text: string | null | undefined, now = new Date()): ProductAnalyticsRequest | null {
   // "ni bdhaa gani zimeuzwa wiki hii", "nini kiemuzika leo" — one slip in the
@@ -214,9 +248,14 @@ export function aggregateProducts(lines: ProductSaleLine[], costs: ProductCostPo
     if (!product || line.quantity <= 0 || line.lineTotal <= 0) continue;
     const key = clean(product);
     const unitCost = currentCost(product, line.occurredAt, costs);
-    const existing = byProduct.get(key) ?? { product, quantity: 0, revenue: 0, margin: 0, costed: true };
+    const existing = byProduct.get(key) ?? {
+      product, quantity: 0, revenue: 0, margin: 0, costed: true, quantityByUnit: {},
+    };
     existing.quantity += line.quantity;
     existing.revenue += line.lineTotal;
+    const unit = quantityUnit(line.unit);
+    existing.quantityByUnit = existing.quantityByUnit ?? {};
+    existing.quantityByUnit[unit] = (existing.quantityByUnit[unit] ?? 0) + line.quantity;
     if (unitCost === null) {
       existing.costed = false;
       existing.margin = null;
@@ -318,13 +357,22 @@ export function productAnalyticsReply(
       : (lang === 'sw' ? 'faida ya makisio' : 'estimated margin');
   const rows = ranked.slice(0, 5).map((item, index) => {
     const value = request.rankBy === 'quantity'
-      ? `${item.quantity} ${lang === 'sw' ? 'vipande/vitengo' : 'units'}`
+      ? quantityText([item], lang)
       : request.rankBy === 'revenue'
         ? `TSh ${Math.round(item.revenue).toLocaleString('en-US')}`
         : `TSh ${Math.round(item.margin ?? 0).toLocaleString('en-US')}`;
     return `${index + 1}. ${item.product} — ${value}`;
   });
+  const total = request.rankBy === 'quantity'
+    ? (lang === 'sw'
+      ? `Jumla ya bidhaa zote zilizouzwa ${periodLabel}: *${quantityText(items, lang)}*. Bidhaa tofauti: ${items.length}.`
+      : `Total products sold ${periodLabel}: *${quantityText(items, lang)}*. Distinct products: ${items.length}.`)
+    : request.rankBy === 'revenue'
+      ? (lang === 'sw'
+        ? `Jumla ya mapato ya bidhaa zote ${periodLabel}: *${money(items.reduce((sum, item) => sum + item.revenue, 0))}*.`
+        : `Total product revenue ${periodLabel}: *${money(items.reduce((sum, item) => sum + item.revenue, 0))}*.`)
+      : '';
   return lang === 'sw'
-    ? `Kwa ${periodLabel}, nimepanga bidhaa kwa ${basis}:\n${rows.join('\n')}\n\nHii ni ${basis}, si kipimo kingine.${uncostedNote}`
-    : `For ${periodLabel}, I ranked products by ${basis}:\n${rows.join('\n')}\n\nThis is ranked by ${basis}, not another measure.${uncostedNote}`;
+    ? `${total}${total ? '\n\n' : ''}Kwa ${periodLabel}, bidhaa ${rows.length} za juu kwa ${basis}:\n${rows.join('\n')}\n\nHii ni ${basis}, si kipimo kingine.${uncostedNote}`
+    : `${total}${total ? '\n\n' : ''}For ${periodLabel}, the top ${rows.length} products by ${basis}:\n${rows.join('\n')}\n\nThis is ranked by ${basis}, not another measure.${uncostedNote}`;
 }

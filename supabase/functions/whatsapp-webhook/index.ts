@@ -2354,15 +2354,16 @@ async function productAnalytics(
   if (rows.length === 0) return { replyData: [], costs: [] };
   const byId = new Map(rows.map((row) => [row.id, row.occurred_at]));
   const { data: lines } = await db.from('daily_record_lines')
-    .select('daily_record_id, description, quantity, line_total')
+    .select('daily_record_id, description, quantity, line_total, unit')
     .in('daily_record_id', rows.map((row) => row.id))
     .limit(10000);
-  const replyData = ((lines ?? []) as Array<{ daily_record_id: string; description: string; quantity: number; line_total: number }>)
+  const replyData = ((lines ?? []) as Array<{ daily_record_id: string; description: string; quantity: number; line_total: number; unit: string | null }>)
     .map((line) => ({
       description: String(line.description ?? '').trim(),
       quantity: Number(line.quantity),
       lineTotal: Number(line.line_total),
       occurredAt: byId.get(line.daily_record_id) ?? new Date().toISOString(),
+      unit: line.unit,
     }))
     .filter((line) => line.description && line.quantity > 0 && line.lineTotal > 0);
   const { data: costs } = await db.from('product_costs')
