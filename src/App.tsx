@@ -3,6 +3,7 @@ import AppShell from '@/components/layout/AppShell';
 import RequireAuth from '@/guards/RequireAuth';
 import RequireRole from '@/guards/RequireRole';
 import WaLogin from '@/routes/auth/WaLogin';
+import BusinessSignup from '@/routes/auth/BusinessSignup';
 import WhatsAppAuth from '@/routes/auth/WhatsAppAuth';
 import ClaimsInbox from '@/routes/claims/ClaimsInbox';
 import Landing from '@/routes/marketing/Landing';
@@ -39,7 +40,7 @@ export default function App() {
       {/* Spends a one-shot WhatsApp login token and starts a session. Public
           because the token is the credential; it lives 5 minutes and works once. */}
       <Route path="/wa-login" element={<WaLogin />} />
-      <Route path="/signup" element={<WhatsAppAuth mode="register" />} />
+      <Route path="/signup" element={<BusinessSignup />} />
       {/* Retired public entry points never expose the old company directory or
           shared-password flow. Existing links land on WhatsApp onboarding. */}
       <Route path="/find-company" element={<Navigate to="/signup" replace />} />

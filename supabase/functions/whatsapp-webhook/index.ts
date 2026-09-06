@@ -107,7 +107,16 @@ import {
   parseBusinessChoice,
   startOnboarding,
   type OnboardingStep,
+  type OnboardingResult,
 } from '../_shared/whatsappOnboarding.ts';
+import {
+  findSignupCode,
+  draftIsClaimable,
+  draftLang,
+  draftToCreateAction,
+  badCodeReply,
+  type WebSignupDraftRow,
+} from '../_shared/webSignupDraft.ts';
 import { waSyntheticEmail } from '../_shared/waIdentityEmail.ts';
 import {
   costConfirmation,
@@ -6920,6 +6929,20 @@ async function readInvitePreview(db: Admin, code: string): Promise<InvitePreview
   };
 }
 
+/**
+ * Looks a signup code up by hash. Nothing is written here: a draft is only
+ * burned once the business it describes actually exists.
+ */
+async function readSignupDraft(db: Admin, code: string): Promise<WebSignupDraftRow | null> {
+  const { data } = await db
+    .from('web_signup_drafts')
+    .select('id, business_name, business_description, full_name, location, opening_time, closing_time, lang, claimed_at, expires_at')
+    .eq('code_hash', await sha256Hex(code))
+    .maybeSingle();
+  const row = data as WebSignupDraftRow | null;
+  return row && draftIsClaimable(row) ? row : null;
+}
+
 async function handleOnboarding(
   db: Admin, phone: string, text: string | null, isImage: boolean,
 ): Promise<string> {
@@ -6929,8 +6952,21 @@ async function handleOnboarding(
     .eq('phone_e164', phone)
     .maybeSingle();
 
+  // Somebody who filled the web form arrives holding a code. The answers are
+  // already stored, so this message is not an answer to a question: it is the
+  // proof that this number is theirs. Checked before any conversation state,
+  // because the draft replaces the conversation.
+  const signupCode = findSignupCode(text);
+  const webDraft = signupCode ? await readSignupDraft(db, signupCode) : null;
+  if (signupCode && !webDraft) {
+    // Only say so when the message was nothing BUT a code. A stray eight
+    // character word inside a sentence must not derail an ordinary chat.
+    const bareCode = /^(?:sajili|signup|sign up|register)?\s*[A-Za-z0-9-]{8,12}$/i.test(String(text ?? '').trim());
+    if (bareCode) return badCodeReply((state?.lang as Lang | null) ?? 'sw');
+  }
+
   const fresh = !state || new Date(state.expires_at as string) < new Date();
-  if (fresh) {
+  if (fresh && !webDraft) {
     const open = startOnboarding();
     const inviteCode = findInviteCode(text);
     const invitePreview = inviteCode ? await readInvitePreview(db, inviteCode) : null;
@@ -6949,18 +6985,20 @@ async function handleOnboarding(
       : open.reply;
   }
 
-  const lang: Lang = (state.lang as Lang | null) ?? 'en';
+  const lang: Lang = webDraft ? draftLang(webDraft) : ((state?.lang as Lang | null) ?? 'en');
   // A photo mid-onboarding is not an answer to the question we asked.
-  if (isImage) {
+  if (isImage && !webDraft) {
     return lang === 'sw'
       ? 'Nimeipokea picha, lakini tumalize kujiandikisha kwanza.'
       : 'I have your photo, but let us finish signing you up first.';
   }
 
-  const next = advanceOnboarding(
-    state.step as OnboardingStep, text, lang,
-    (state.draft ?? {}) as Record<string, string>,
-  );
+  const next: OnboardingResult = webDraft
+    ? { step: 'create_closing_time', reply: '', action: draftToCreateAction(webDraft), draft: {} }
+    : advanceOnboarding(
+        state!.step as OnboardingStep, text, lang,
+        (state!.draft ?? {}) as Record<string, string>,
+      );
 
   if (next.action.kind === 'set_language') {
     await db.from('whatsapp_onboarding').update({
@@ -7028,6 +7066,16 @@ async function handleOnboarding(
       if (hoursError) {
         console.error('business hours save failed', hoursError.message);
       }
+    }
+
+    if (webDraft) {
+      await db.from('web_signup_drafts')
+        .update({ claimed_at: new Date().toISOString(), claimed_by_phone: phone })
+        .eq('id', webDraft.id)
+        .is('claimed_at', null);
+      // The conversational state row is dead now; leaving it would answer the
+      // next message with a question this person already answered on the web.
+      await db.from('whatsapp_onboarding').delete().eq('phone_e164', phone);
     }
 
     const joined = next.action.kind === 'join_business';

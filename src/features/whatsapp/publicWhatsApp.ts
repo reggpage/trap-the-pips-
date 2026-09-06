@@ -29,3 +29,15 @@ export function buildRisipWhatsAppUrl(
 
   return `https://wa.me/${number}?text=${encodeURIComponent(messages[lang][intent])}`;
 }
+
+/**
+ * The link that finishes a web signup.
+ *
+ * The code comes from web-signup-draft; the number comes from here, so the one
+ * public Risip number stays defined in exactly one place rather than being
+ * duplicated into an edge function's environment.
+ */
+export function buildSignupConfirmUrl(code: string): string {
+  const number = risipWhatsAppNumber();
+  return `https://wa.me/${number}?text=${encodeURIComponent(`SAJILI ${code}`)}`;
+}
