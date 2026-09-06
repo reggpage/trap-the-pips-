@@ -250,7 +250,7 @@ import {
 } from '../_shared/whatsappPaymentMethod.ts';
 // Who sees a message first: the line between a sentence and a protocol answer.
 import { answersPendingQuestion, isProtectedSystemCommand, messageGoesToModel, protectedPriceBandAnswer, protectedSaleProductAnswer } from '../_shared/whatsappRouting.ts';
-import { catalogueProposalBlocked, retrievalHealthContext, type RetrievalHealth } from '../_shared/whatsappRetrievalHealth.ts';
+import { catalogueProposalBlocked, overallRetrievalStatus, retrievalHealthContext, type RetrievalHealth } from '../_shared/whatsappRetrievalHealth.ts';
 import { aiFailureLayer } from '../_shared/whatsappAiFailure.ts';
 import { mergeStockAnswers, pendingConversationContext, type StockAnswer } from '../_shared/whatsappPendingContext.ts';
 import {
@@ -279,6 +279,7 @@ import type { ValidatedBusinessEvent } from '../_shared/whatsappBusinessEvent.ts
 import type { DailyRecordPaymentMethod } from '../_shared/whatsappDailyRecords.ts';
 import type { WholeAnimalPaymentMethod } from '../_shared/whatsappWholeAnimalProcurement.ts';
 import {
+  AI_RUNTIME_VERSION,
   PROMPT_VERSION,
   TOOL_SCHEMA_VERSION,
   buildInterpretation,
@@ -7525,7 +7526,7 @@ Deno.serve(async (req) => {
               history,
               userText: body!,
               executeTool: (name, input) => catalogueProposalBlocked(name, retrieval.health)
-                ? Promise.resolve({ content: 'catalogue_retrieval_unavailable: the catalogue could not be verified. No proposal was executed. Explain the temporary lookup problem; do not say the product is missing and do not substitute a money-event tool.', isError: true })
+                ? Promise.resolve({ content: 'catalogue_retrieval_unavailable: the catalogue could not be verified. No proposal was executed. Explain the temporary lookup problem; do not say the product is missing and do not substitute a money-event tool.', isError: true, errorCode: 'retrieval_catalogue_unavailable' })
                 : executeAssistantTool(db, identity, waMessageId, lang, name, input, evidenceText ?? body!),
               onFailure: (code) => {
                 assistantFailure = code;
@@ -7552,6 +7553,10 @@ Deno.serve(async (req) => {
             // written after the reply has gone out, and it cannot fail loudly —
             // a telemetry row must never cost a shop its answer.
             const aiLatencyMs = Date.now() - aiStartedAt;
+            const retrievalStatus = overallRetrievalStatus(retrieval.health);
+            const conversationState = convo?.awaiting
+              ? 'active_question'
+              : history.length > 0 ? 'history' : 'none';
             const recordInterpretation = async (
               outcome: BackendOutcome, reason: FallbackReason | null,
             ) => {
@@ -7574,6 +7579,8 @@ Deno.serve(async (req) => {
                   rejectionCode: guardRefusalCode(assistantFailure),
                   providerFailure: assistant ? null : assistantFailure,
                 });
+                const diagnosticCode = assistant?.toolFailureCode
+                  ?? ((assistant?.unavailable || !assistant) ? assistantFailure : null);
                 await db.rpc('wa_record_ai_interpretation', {
                   p_company_id: identity.company_id,
                   p_wa_message_id: row.waMessageId,
@@ -7597,6 +7604,12 @@ Deno.serve(async (req) => {
                   // the cache was paid for and thrown away.
                   p_cache_read_tokens: assistant?.cache?.read ?? null,
                   p_cache_write_tokens: assistant?.cache?.written ?? null,
+                  p_failure_layer: diagnosticCode ? aiFailureLayer(diagnosticCode) : 'none',
+                  p_retrieval_status: retrievalStatus,
+                  p_conversation_state: conversationState,
+                  p_tool_result_status: assistant?.toolResultStatus ?? 'none',
+                  p_tool_failure_code: assistant?.toolFailureCode ?? null,
+                  p_runtime_version: AI_RUNTIME_VERSION,
                 });
               } catch { /* telemetry is never allowed to break a message */ }
             };
@@ -7669,6 +7682,12 @@ Deno.serve(async (req) => {
                 p_fallback_used: true,
                 p_fallback_reason: 'budget_block',
                 p_provider_failure_code: null,
+                p_failure_layer: 'budget',
+                p_retrieval_status: 'not_run',
+                p_conversation_state: convo?.awaiting ? 'active_question' : 'none',
+                p_tool_result_status: 'none',
+                p_tool_failure_code: null,
+                p_runtime_version: AI_RUNTIME_VERSION,
               });
             } catch { /* telemetry is never allowed to break a message */ }
             await audit(db, identity, waMessageId, 'conversational_ai', 'budget', 'fallback');

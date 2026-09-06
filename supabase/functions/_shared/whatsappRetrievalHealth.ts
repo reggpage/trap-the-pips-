@@ -1,6 +1,14 @@
 /** Retrieval availability is a fact, not an empty product catalogue. */
 export type RetrievalSource = 'vocabulary' | 'products' | 'units' | 'prices';
 export type RetrievalHealth = Record<RetrievalSource, 'available' | 'partial' | 'unavailable'>;
+export type RetrievalStatus = 'available' | 'partial' | 'unavailable';
+
+export function overallRetrievalStatus(health: RetrievalHealth): RetrievalStatus {
+  const values = Object.values(health);
+  if (values.includes('unavailable')) return 'unavailable';
+  if (values.includes('partial')) return 'partial';
+  return 'available';
+}
 
 export function retrievalHealthContext(health: RetrievalHealth): string {
   return 'LIVE RETRIEVAL STATUS: ' + JSON.stringify(health)

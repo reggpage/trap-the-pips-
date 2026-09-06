@@ -23,6 +23,8 @@
  */
 export const PROMPT_VERSION = 'risip-agent-v3-active-question';
 export const TOOL_SCHEMA_VERSION = 'tools-foundation-v1-runtime-checked';
+/** Semantic runtime release written into privacy-safe operations telemetry. */
+export const AI_RUNTIME_VERSION = 'whatsapp-ai-phase10-observability-v1';
 
 /**
  * What the assistant was asked to do, derived from the tool it actually called.

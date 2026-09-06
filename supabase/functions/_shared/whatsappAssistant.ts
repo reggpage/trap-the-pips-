@@ -240,6 +240,8 @@ export type AssistantToolExecution = {
    * is already prose does not need to.
    */
   fallbackReply?: string;
+  /** Privacy-safe operational code; never merchant wording or tool output. */
+  errorCode?: string;
 };
 
 export type AssistantToolExecutor = (
@@ -278,6 +280,10 @@ export type AssistantRunResult = {
    */
   lastToolInput?: Record<string, unknown> | null;
   model: string;
+  /** Aggregate status of tools executed in this turn, for operations only. */
+  toolResultStatus?: 'none' | 'success' | 'error';
+  /** First bounded infrastructure/tool failure code, never merchant data. */
+  toolFailureCode?: string | null;
   /**
    * Whether deterministic business prose was sent in place of an answer.
    *
@@ -1668,6 +1674,9 @@ export async function runConversationalAssistant(args: {
 ${userText}` },
   ];
   const executed: Array<{ name: string; input: Record<string, unknown> }> = [];
+  let toolResultStatus: 'none' | 'success' | 'error' = 'none';
+  let toolFailureCode: string | null = null;
+  const toolObservability = () => ({ toolResultStatus, toolFailureCode });
   // Accumulated across every round of the turn, so one row says what the whole
   // exchange cost in cached and uncached tokens.
   const cache: AssistantCacheUsage = { read: 0, written: 0 };
@@ -1839,6 +1848,7 @@ ${userText}` },
           toolNames: executed.map((call) => call.name),
           lastToolInput: executed.length > 0 ? executed[executed.length - 1].input : null,
           model: modelFor(round),
+          ...toolObservability(),
           cache,
           usedSafeFallback: false,
           unavailable: true,
@@ -1850,6 +1860,7 @@ ${userText}` },
         toolNames: executed.map((call) => call.name),
           lastToolInput: executed.length > 0 ? executed[executed.length - 1].input : null,
         model: modelFor(round),
+        ...toolObservability(),
         cache,
         usedSafeFallback: false,
         unavailable: !modelText,
@@ -1870,6 +1881,7 @@ ${userText}` },
         toolNames: executed.map((call) => call.name),
         lastToolInput: executed.length > 0 ? executed[executed.length - 1].input : null,
         model: modelFor(round),
+        ...toolObservability(),
         cache,
         usedSafeFallback: false,
         unavailable: true,
@@ -1908,7 +1920,16 @@ ${userText}` },
             ? 'Sikuweza kupata taarifa hiyo sasa.'
             : 'I could not retrieve that information right now.',
           isError: true,
+          errorCode: `tool_execution_failed:${call.name}`,
         };
+      }
+      if (result.isError) {
+        toolResultStatus = 'error';
+        if (!toolFailureCode) {
+          toolFailureCode = (result.errorCode || `backend_rejected:${call.name}`).slice(0, 96);
+        }
+      } else if (toolResultStatus === 'none') {
+        toolResultStatus = 'success';
       }
       executed.push({ name: call.name, input: call.input });
       evidence.push(result.content);
@@ -1927,6 +1948,7 @@ ${userText}` },
         toolNames: executed.map((call) => call.name),
           lastToolInput: executed.length > 0 ? executed[executed.length - 1].input : null,
         model: modelFor(round),
+        ...toolObservability(),
         cache,
         usedSafeFallback: false,
       };
